@@ -9,15 +9,13 @@ export const TranslationContext = React.createContext({})
 export const TranslationProvider = ({ children, translations }) => {
   const [locale, setLocale] = useState(Localization.locale)
 
-  console.log('setting up translations')
-  console.log(`local locale: ${Localization.locale} `)
-  console.log(`default locale: ${locale} `)
-
-  i18n.locale = locale
-  i18n.translations = translations
-  i18n.fallbacks = true
-  // update layout direction
-  I18nManager.forceRTL(Localization.isRTL)
+  useEffect(() => {
+    i18n.locale = locale
+    i18n.translations = translations
+    i18n.fallbacks = true
+    // update layout direction
+    I18nManager.forceRTL(Localization.isRTL)
+  }, [locale])
 
   const localized = useCallback(
     (key, config) =>
@@ -29,26 +27,33 @@ export const TranslationProvider = ({ children, translations }) => {
 
   const getLocale = useCallback(async () => {
     const localeJSON = await Storage.getItem('locale')
-    console.log(
-      `getting locale from storage and writing it to memory ${localeJSON}`,
-    )
 
     // If we have a locale stored in local storage, that is high priority (it overrides the current device locale)
     setLocale(localeJSON !== null ? localeJSON : Localization.locale)
   }, [setLocale])
+
+  const lan = React.useMemo(() => {
+    switch (locale) {
+      case 'ar':
+        return 'lan_s'
+      default:
+        return 'lan_p'
+    }
+  }, [locale])
 
   useEffect(() => {
     getLocale()
   }, [getLocale])
 
   useEffect(() => {
-    console.log(`write to storage locale: ${locale}`)
     Storage.setItem('locale', locale)
   }, [locale])
 
   const value = {
     localized,
     setAppLocale: setLocale,
+    lan,
+    Language: locale
   }
 
   return (
